@@ -23,6 +23,6 @@ public class UrlMapping {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "urlMapping")
+    @OneToMany(mappedBy = "urlmapping")
     private List<clickevent> clickevents;
 }
