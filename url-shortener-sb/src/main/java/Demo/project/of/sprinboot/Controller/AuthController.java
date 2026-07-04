@@ -1,5 +1,6 @@
 package Demo.project.of.sprinboot.Controller;
 
+import Demo.project.of.sprinboot.DTO.LoginRequest;
 import Demo.project.of.sprinboot.DTO.Registerrequest;
 import Demo.project.of.sprinboot.Model.User;
 import Demo.project.of.sprinboot.Service.Userservice;
@@ -17,8 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private Userservice userservice;
 
+    @PostMapping("/public/login")
+    public ResponseEntity<?> Loginuser(@RequestBody LoginRequest loginRequest) {
+          return ResponseEntity.ok(userservice.login(loginRequest));
+    }
+
     @PostMapping("/public/register")
-    public ResponseEntity<String> registeruser(@RequestBody Registerrequest registerrequest){
+    public ResponseEntity<?> registeruser(@RequestBody Registerrequest registerrequest){
         User user = new User();
         user.setUsername(registerrequest.getUsername());
         user.setPassword(registerrequest.getPassword());
