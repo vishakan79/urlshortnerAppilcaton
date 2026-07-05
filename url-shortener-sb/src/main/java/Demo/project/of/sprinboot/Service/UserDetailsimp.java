@@ -28,7 +28,7 @@ public class UserDetailsimp implements UserDetails {
                 user.getEmail(),
                 user.getPassword(),
                 Collections.singletonList(grantedAuthority),
-                user.getPassword()
+                user.getUsername()
         );
     }
 
