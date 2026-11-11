@@ -2,7 +2,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 
 @import "tailwindcss";
-@import "tailwindcss";
 
 /* =========================
    Theme Colors
@@ -70,4 +69,42 @@
 }
 @utility bg-custom-gradient {
   background: linear-gradient(to right, #2563eb, #7c3aed);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Roboto", system-ui, sans-serif;
+  background: #f8fafc;
+  overflow-x: hidden;
+}
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+#root > main { flex: 1; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+.animated-gradient {
+  background: linear-gradient(120deg, #2563eb, #7c3aed, #db2777, #2563eb);
+  background-size: 300% 300%;
+  animation: gradientMove 8s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

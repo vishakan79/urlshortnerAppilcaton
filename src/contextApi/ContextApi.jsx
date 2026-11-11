@@ -1,24 +1,32 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 const ContextApi = createContext();
 
-export const ContextProvider = ({ children }) => {
-    const getToken = localStorage.getItem("JWT_TOKEN")
-        ? JSON.parse(localStorage.getItem("JWT_TOKEN"))
-        : null;
-
-    const [token, setToken] = useState(getToken);
-
-    const sendData = {
-        token,
-        setToken,
-    };
-
-    return <ContextApi.Provider value={sendData}>{children}</ContextApi.Provider>
+const readToken = () => {
+  try {
+    const raw = localStorage.getItem("JWT_TOKEN");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 };
 
+export const ContextProvider = ({ children }) => {
+  const [token, setTokenState] = useState(readToken);
 
-export const useStoreContext = () => {
-    const context = useContext(ContextApi);
-    return context;
-}
+  const setToken = useCallback((value) => {
+    setTokenState(value);
+    try {
+      if (value) localStorage.setItem("JWT_TOKEN", JSON.stringify(value));
+      else localStorage.removeItem("JWT_TOKEN");
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+
+  const sendData = useMemo(() => ({ token, setToken }), [token, setToken]);
+
+  return <ContextApi.Provider value={sendData}>{children}</ContextApi.Provider>;
+};
+
+export const useStoreContext = () => useContext(ContextApi);
