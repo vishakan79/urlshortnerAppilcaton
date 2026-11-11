@@ -1,5 +1,5 @@
 export const API_URL = (
-  import.meta.env.VITE_API_URL || "https://url-shortener-sb-ow0f.onrender.com"
+  import.meta.env.VITE_API_URL || "https://url-shortener-api-u2vv.onrender.com"
 ).replace(/\/$/, "");
 
 export const shortLink = (code) => `${API_URL}/${code}`;
