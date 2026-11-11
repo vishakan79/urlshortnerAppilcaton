@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import AuthShell, { Field } from "./AuthShell";
@@ -8,6 +8,7 @@ import { useStoreContext } from "../contextApi/ContextApi";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const carry = useLocation().state;
   const { setToken } = useStoreContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,7 +20,7 @@ const LoginPage = () => {
     try {
       const data = await api.login(username.trim(), password);
       setToken(data.token);
-      navigate("/dashboard");
+      navigate("/dashboard", { state: carry });
     } catch (e) {
       setError(e.message);
     } finally {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCopy, FaCheck, FaExternalLinkAlt, FaMousePointer, FaLink } from "react-icons/fa";
 import { api, shortLink } from "../api";
@@ -45,8 +45,9 @@ const Stat = ({ icon, label, value }) => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { token, setToken } = useStoreContext();
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(location.state?.url || "");
   const [urls, setUrls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -62,17 +63,14 @@ const Dashboard = () => {
     return false;
   }, [navigate, setToken]);
 
-  const load = useCallback(async () => {
-    try {
-      setUrls(await api.myUrls(token));
-    } catch (e) {
-      if (!handleAuthError(e)) setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    let active = true;
+    api.myUrls(token)
+      .then((data) => active && setUrls(data))
+      .catch((e) => active && !handleAuthError(e) && setError(e.message))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, [token, handleAuthError]);
-
-  useEffect(() => { load(); }, [load]);
 
   const create = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoIosMenu } from "react-icons/io";
 import { RxCross2 } from "react-icons/rx";
@@ -9,9 +9,9 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { token, setToken } = useStoreContext();
   const path = useLocation().pathname;
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => setOpen(false), [path]);
+  // menu is open only for the page it was opened on, so it closes on navigation
+  const [openAt, setOpenAt] = useState(null);
+  const open = openAt === path;
 
   const logout = () => {
     setToken(null);
@@ -20,7 +20,7 @@ const Navbar = () => {
 
   const linkCls = (p) =>
     `relative py-1 transition-colors ${
-      path === p ? "text-white font-semibold" : "text-gray-200 hover:text-white"
+      path === p ? "text-btnColor font-semibold" : "text-slate-600 hover:text-btnColor"
     }`;
 
   const items = (
@@ -32,14 +32,14 @@ const Navbar = () => {
       {!token ? (
         <Link
           to="/register"
-          className="bg-rose-600 hover:bg-rose-500 text-white text-center font-semibold px-5 py-2 rounded-md transition-colors"
+          className="bg-custom-gradient text-white text-center font-semibold px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
         >
           Sign Up
         </Link>
       ) : (
         <button
           onClick={logout}
-          className="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-5 py-2 rounded-md transition-colors"
+          className="border border-slate-300 text-slate-700 font-semibold px-5 py-2 rounded-lg hover:bg-slate-100 transition-colors"
         >
           Log Out
         </button>
@@ -48,12 +48,12 @@ const Navbar = () => {
   );
 
   return (
-    <header className="h-16 bg-custom-gradient z-50 sticky top-0 shadow-md">
+    <header className="h-16 bg-white/85 backdrop-blur border-b border-slate-200 z-50 sticky top-0">
       <div className="lg:px-14 sm:px-8 px-4 h-full w-full flex items-center justify-between">
         <Link to="/">
           <motion.h1
             whileHover={{ scale: 1.05 }}
-            className="font-bold text-2xl sm:text-3xl text-white italic"
+            className="font-extrabold text-2xl sm:text-3xl text-gradient italic"
           >
             Linklytics
           </motion.h1>
@@ -63,8 +63,8 @@ const Navbar = () => {
 
         <button
           aria-label="Toggle menu"
-          onClick={() => setOpen((o) => !o)}
-          className="sm:hidden text-white text-3xl"
+          onClick={() => setOpenAt(open ? null : path)}
+          className="sm:hidden text-slate-700 text-3xl"
         >
           {open ? <RxCross2 /> : <IoIosMenu />}
         </button>
@@ -77,7 +77,7 @@ const Navbar = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="sm:hidden overflow-hidden bg-custom-gradient shadow-lg px-4 flex flex-col gap-4 pb-5 pt-2"
+            className="sm:hidden overflow-hidden bg-white border-b border-slate-200 shadow-lg px-4 flex flex-col gap-4 pb-5 pt-2"
           >
             {items}
           </motion.nav>

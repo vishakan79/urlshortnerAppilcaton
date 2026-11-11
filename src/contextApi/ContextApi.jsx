@@ -29,4 +29,5 @@ export const ContextProvider = ({ children }) => {
   return <ContextApi.Provider value={sendData}>{children}</ContextApi.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useStoreContext = () => useContext(ContextApi);
