@@ -52,4 +52,20 @@ export const api = {
   shorten: (originalUrl, token) =>
     request("/api/urls/shorten", { method: "POST", body: { originalUrl }, token }),
   myUrls: (token) => request("/api/urls/myurls", { token }),
+  totalClicks: (token, start, end) =>
+    request(`/api/urls/totalClicks?startdate=${start}&enddate=${end}`, { token }),
+  analytics: (code, token, start, end) =>
+    request(`/api/urls/analytics/${code}?startdate=${start}&enddate=${end}`, { token }),
 };
+
+const pad = (n) => String(n).padStart(2, "0");
+export const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+api.totalClicks = (token, start, end) =>
+  request(`/api/urls/totalClicks?startdate=${start}&enddate=${end}`, { token });
+
+api.analytics = (code, token, start, end) =>
+  request(
+    `/api/urls/analytics/${code}?startdate=${start}T00:00:00&enddate=${end}T23:59:59`,
+    { token }
+  );

@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import NavBar from "./components/NavBar";
@@ -8,7 +8,7 @@ import LandlingPage from "./components/LandlingPage";
 import AboutPage from "./components/AboutPage";
 import RegisterPage from "./components/RegisterPage";
 import LoginPage from "./components/LoginPage";
-import Dashboard from "./components/Dashboard";
+const Dashboard = lazy(() => import("./components/Dashboard"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import { api } from "./api";
 
@@ -34,7 +34,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<Page><LoginPage /></Page>} />
         <Route
           path="/dashboard"
-          element={<Page><ProtectedRoute><Dashboard /></ProtectedRoute></Page>}
+          element={<Page><ProtectedRoute><Suspense fallback={<div className="p-8"><div className="skeleton h-64 rounded-2xl max-w-6xl mx-auto" /></div>}><Dashboard /></Suspense></ProtectedRoute></Page>}
         />
         <Route path="*" element={<Page><LandlingPage /></Page>} />
       </Routes>
