@@ -4,36 +4,38 @@ import {
   LinearScale,
   BarElement,
   Tooltip,
+  Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { lastDays } from "../utils/dates";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-/** counts: { "2026-11-11": 3 } -> chart ready series over the whole range. */
-const ClicksChart = ({ counts, days, height = "h-64" }) => {
-  const dates = lastDays(days);
-  const values = dates.map((d) => counts[d] || 0);
-  const total = values.reduce((a, b) => a + b, 0);
+/** counts: { "2026-11-11": 3 } -> bar chart of the days that have clicks. */
+const ClicksChart = ({ counts }) => {
+  const labels = Object.keys(counts).sort();
+  const values = labels.map((l) => counts[l]);
 
-  if (total === 0) {
+  if (labels.length === 0) {
     return (
-      <div className={`${height} flex items-center justify-center text-slate-400 text-sm text-center px-4`}>
-        No clicks in this period yet. Share your link to see data here.
+      <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-4">
+        <h3 className="sm:text-2xl text-lg font-bold text-slate-800 mb-1">No Data For This Time Period</h3>
+        <p className="sm:w-96 w-full text-sm sm:text-base text-slate-600">
+          Share your short link to view where your engagement is coming from
+        </p>
       </div>
     );
   }
 
   const data = {
-    labels: dates.map((d) => d.slice(5)),
+    labels,
     datasets: [
       {
-        label: "Clicks",
+        label: "Total Clicks",
         data: values,
-        backgroundColor: "#4f46e5",
-        hoverBackgroundColor: "#7c3aed",
-        borderRadius: 6,
-        maxBarThickness: 36,
+        backgroundColor: "#3b82f6",
+        borderColor: "#3b82f6",
+        barThickness: 24,
+        borderRadius: 2,
       },
     ],
   };
@@ -42,21 +44,20 @@ const ClicksChart = ({ counts, days, height = "h-64" }) => {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 400 },
-    plugins: {
-      legend: { display: false },
-      tooltip: { callbacks: { title: (items) => dates[items[0].dataIndex] } },
-    },
+    plugins: { legend: { display: true } },
     scales: {
-      x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
-      y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#e2e8f0" } },
+      y: {
+        beginAtZero: true,
+        ticks: { precision: 0 },
+        title: { display: true, text: "Number Of Clicks", font: { family: "Roboto", size: 16, weight: "bold" }, color: "#475569" },
+      },
+      x: {
+        title: { display: true, text: "Date", font: { family: "Roboto", size: 16, weight: "bold" }, color: "#475569" },
+      },
     },
   };
 
-  return (
-    <div className={height}>
-      <Bar data={data} options={options} />
-    </div>
-  );
+  return <Bar className="w-full" data={data} options={options} />;
 };
 
 export default ClicksChart;

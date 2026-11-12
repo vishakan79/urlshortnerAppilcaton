@@ -2,9 +2,68 @@ export const API_URL = (
   import.meta.env.VITE_API_URL || "https://url-shortener-api-u2vv.onrender.com"
 ).replace(/\/$/, "");
 
-export const shortLink = (code) => `${API_URL}/${code}`;
+// Base used when showing short links. Set VITE_SHORT_URL_BASE if you attach a custom domain.
+export const SHORT_BASE = (import.meta.env.VITE_SHORT_URL_BASE || API_URL).replace(/\/$/, "");
+export const shortLink = (code) => `${SHORT_BASE}/${code}`;
 
-async function request(path, { method = "GET", body, token } = {}) {
+/* ---------- free-tier cold start handling ---------- */
+const listeners = new Set();
+let waking = false;
+const setWaking = (v) => {
+  waking = v;
+  listeners.forEach((fn) => fn());
+};
+export const subscribeWaking = (fn) => {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
+export const getWaking = () => waking;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let lastAwake = 0;
+const FRESH_MS = 4 * 60 * 1000;
+
+async function ping(timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_URL}/api/health`, { signal: ctrl.signal, cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+let wakePromise = null;
+/** Resolves true once the backend answers. Shows the "waking up" banner if it takes longer than ~2s. */
+export function ensureAwake() {
+  if (Date.now() - lastAwake < FRESH_MS) return Promise.resolve(true);
+  if (!wakePromise) {
+    wakePromise = (async () => {
+      const bannerTimer = setTimeout(() => setWaking(true), 2000);
+      const deadline = Date.now() + 150000;
+      try {
+        while (Date.now() < deadline) {
+          if (await ping()) {
+            lastAwake = Date.now();
+            return true;
+          }
+          await sleep(2500);
+        }
+        return false;
+      } finally {
+        clearTimeout(bannerTimer);
+        setWaking(false);
+        wakePromise = null;
+      }
+    })();
+  }
+  return wakePromise;
+}
+
+async function send(path, { method = "GET", body, token } = {}) {
   let res;
   try {
     res = await fetch(`${API_URL}${path}`, {
@@ -16,8 +75,11 @@ async function request(path, { method = "GET", body, token } = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new Error("Server is waking up. Please try again in a few seconds.");
+    const err = new Error("Cannot reach the server. Please try again.");
+    err.network = true;
+    throw err;
   }
+  lastAwake = Date.now();
 
   const text = await res.text();
   let data = text;
@@ -40,8 +102,19 @@ async function request(path, { method = "GET", body, token } = {}) {
   return data;
 }
 
+async function request(path, opts) {
+  await ensureAwake();
+  try {
+    return await send(path, opts);
+  } catch (e) {
+    if (!e.network) throw e;
+    lastAwake = 0; // server probably went to sleep in between, wake it and retry once
+    if (await ensureAwake()) return send(path, opts);
+    throw e;
+  }
+}
+
 export const api = {
-  health: () => request("/api/health").catch(() => null),
   login: (username, password) =>
     request("/api/auth/public/login", { method: "POST", body: { username, password } }),
   register: (username, email, password) =>
@@ -52,20 +125,12 @@ export const api = {
   shorten: (originalUrl, token) =>
     request("/api/urls/shorten", { method: "POST", body: { originalUrl }, token }),
   myUrls: (token) => request("/api/urls/myurls", { token }),
-  totalClicks: (token, start, end) =>
+  totalClicks: (start, end, token) =>
     request(`/api/urls/totalClicks?startdate=${start}&enddate=${end}`, { token }),
-  analytics: (code, token, start, end) =>
-    request(`/api/urls/analytics/${code}?startdate=${start}&enddate=${end}`, { token }),
+  analytics: (code, start, end, token) =>
+    request(
+      `/api/urls/analytics/${code}?startdate=${start}T00:00:00&enddate=${end}T23:59:59`,
+      { token }
+    ),
+  remove: (id, token) => request(`/api/urls/${id}`, { method: "DELETE", token }),
 };
-
-const pad = (n) => String(n).padStart(2, "0");
-export const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-
-api.totalClicks = (token, start, end) =>
-  request(`/api/urls/totalClicks?startdate=${start}&enddate=${end}`, { token });
-
-api.analytics = (code, token, start, end) =>
-  request(
-    `/api/urls/analytics/${code}?startdate=${start}T00:00:00&enddate=${end}T23:59:59`,
-    { token }
-  );

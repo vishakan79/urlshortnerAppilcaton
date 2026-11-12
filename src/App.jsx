@@ -10,7 +10,8 @@ import RegisterPage from "./components/RegisterPage";
 import LoginPage from "./components/LoginPage";
 const Dashboard = lazy(() => import("./components/Dashboard"));
 import ProtectedRoute from "./components/ProtectedRoute";
-import { api } from "./api";
+import { ensureAwake } from "./api";
+import WakeBanner from "./components/WakeBanner";
 
 const Page = ({ children }) => (
   <motion.main
@@ -45,12 +46,13 @@ const AnimatedRoutes = () => {
 function App() {
   // wake the free-tier backend up as early as possible
   useEffect(() => {
-    api.health();
+    ensureAwake();
   }, []);
 
   return (
     <Router>
       <NavBar />
+      <WakeBanner />
       <AnimatedRoutes />
       <Footer />
     </Router>
